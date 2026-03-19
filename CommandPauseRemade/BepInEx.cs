@@ -2,6 +2,7 @@
 
 namespace Ramune.CommandPauseRemade
 {
+    [BepInDependency("com.rune580.riskofoptions")]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class CommandPauseRemade : BaseUnityPlugin
     {
@@ -14,16 +15,18 @@ namespace Ramune.CommandPauseRemade
         {
             Log.Init(Logger);
 
+            ModConfig.Init(Config);
+
             Stage.onStageStartGlobal += (self) => 
             {
-                CommandPauseController.masterSessionIds.Clear();
+                CommandPauseController.MasterSessionIds.Clear();
             };
 
             On.RoR2.PickupPickerController.OnDisplayBegin += (orig, self, promptController, localUser, cameraRigController) =>
             {
                 orig(self, promptController, localUser, cameraRigController);
 
-                if(RoR2Application.isInSinglePlayer) // handle Singeplayer
+                if(RoR2Application.isInSinglePlayer && ModConfig.EnableSingleplayer.Value) // handle Singeplayer
                     Time.timeScale = 0f;
             };
 
@@ -31,7 +34,7 @@ namespace Ramune.CommandPauseRemade
             {
                 orig(self, promptController, localUser, cameraRigController);
 
-                if(RoR2Application.isInSinglePlayer) // handle Singeplayer
+                if(RoR2Application.isInSinglePlayer && ModConfig.EnableSingleplayer.Value) // handle Singeplayer
                     Time.timeScale = 1f;
             };
 
@@ -39,7 +42,7 @@ namespace Ramune.CommandPauseRemade
             {
                 orig(self);
 
-                if(!NetworkServer.active)
+                if(!NetworkServer.active || !ModConfig.EnableMultiplayer.Value)
                     return;
 
                 var commandPauseController = self.gameObject.AddComponent<CommandPauseController>(); // handle Multiplayer

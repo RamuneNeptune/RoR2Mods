@@ -6,9 +6,7 @@ namespace Ramune.CommandPauseRemade
     {
         public static readonly BuffDef[] PauseBuffDefs = [RoR2Content.Buffs.HealingDisabled, RoR2Content.Buffs.Immune, DLC3Content.Buffs.Untargetable, RoR2Content.Buffs.Entangle];
 
-        public static readonly Dictionary<CharacterMaster, int> masterSessionIds = [];
-
-        public static readonly WaitForSeconds DisableDelay = new(0.225f);
+        public static readonly Dictionary<CharacterMaster, int> MasterSessionIds = [];
 
         public NetworkUIPromptController networkUIPromptController;
 
@@ -26,14 +24,18 @@ namespace Ramune.CommandPauseRemade
             {
                 trackedMaster.GetBody()?.RemoveBuff(RoR2Content.Buffs.Entangle);
 
-                RoR2Application.instance.StartCoroutine(DisableProtection(trackedMaster, (masterSessionIds.GetValueOrDefault(trackedMaster))));
+                if(ModConfig.ProtectionDelay.Value > 0f)
+                {
+                    RoR2Application.instance.StartCoroutine(StartDelay(trackedMaster, (MasterSessionIds.GetValueOrDefault(trackedMaster))));
+                }
+                else DisableProtection(trackedMaster, (MasterSessionIds.GetValueOrDefault(trackedMaster)));
             }
 
             trackedMaster = currentMaster;
 
             if(trackedMaster)
             {
-                masterSessionIds[trackedMaster] = (masterSessionIds.GetValueOrDefault(trackedMaster)) + 1;
+                MasterSessionIds[trackedMaster] = (MasterSessionIds.GetValueOrDefault(trackedMaster)) + 1;
 
                 ToggleProtection(trackedMaster, true);
             }
@@ -53,12 +55,17 @@ namespace Ramune.CommandPauseRemade
         }
 
 
-        public static IEnumerator DisableProtection(CharacterMaster master, int ticket)
+        public static void DisableProtection(CharacterMaster master, int ticket)
         {
-            yield return DisableDelay;
-
-            if(master && masterSessionIds.GetValueOrDefault(master) == ticket)
+            if(master && MasterSessionIds.GetValueOrDefault(master) == ticket)
                 ToggleProtection(master, false);
+        }
+
+
+        public static IEnumerator StartDelay(CharacterMaster master, int ticket)
+        {
+            yield return new WaitForSeconds(ModConfig.ProtectionDelay.Value);
+            DisableProtection(master, ticket);
         }
     }
 }
