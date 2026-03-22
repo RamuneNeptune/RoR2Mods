@@ -1,0 +1,14 @@
+﻿global using RoR2;
+global using RoR2.UI;
+global using BepInEx;
+global using BepInEx.Logging;
+global using BepInEx.Configuration;
+global using UnityEngine;
+global using UnityEngine.Networking;
+global using System.IO;
+global using System.Reflection;
+global using System.Collections;
+global using System.Collections.Generic;
+global using RiskOfOptions;
+global using RiskOfOptions.OptionConfigs;
+global using RiskOfOptions.Options;
