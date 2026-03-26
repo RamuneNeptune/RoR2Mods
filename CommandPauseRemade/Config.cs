@@ -13,9 +13,9 @@ namespace Ramune.CommandPauseRemade
 
         public static void Init(ConfigFile config)
         {
-            EnableSingleplayer = config.Bind("Singleplayer", "Enable Singleplayer Pausing", true, "If true, time will freeze while opening the Artifact of Command menu in singleplayer. (default: true)");
+            EnableSingleplayer = config.Bind("Singleplayer", "Enable Singleplayer Pausing", true, "If true, time will freeze while in the Artifact of Command menu in singleplayer. (default: true)");
 
-            EnableMultiplayer = config.Bind("Multiplayer", "Enable Multiplayer Protection", true, "If true, players receive protection while in the Artifact of Command menu in multiplayer. (default: true)");
+            EnableMultiplayer = config.Bind("Multiplayer", "Enable Multiplayer Protection", true, "If true as host, give players (including yourself) protection while they are in the Artifact of Command menu in multiplayer. (default: true)");
 
             ProtectionDelay = config.Bind("Multiplayer", "Protection Removal Delay", 0.85f, "The delay (in seconds) before protections are removed after closing the Command menu. (default: 0.85)");
 

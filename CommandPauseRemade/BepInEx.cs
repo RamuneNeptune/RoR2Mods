@@ -9,7 +9,7 @@ namespace Ramune.CommandPauseRemade
         public const string PluginGUID = PluginName;
         public const string PluginAuthor = "RamuneNeptune";
         public const string PluginName = "Ramune.CommandPauseRemade";
-        public const string PluginVersion = "1.0.1";
+        public const string PluginVersion = "1.0.2";
 
         public void Awake()
         {
@@ -19,7 +19,7 @@ namespace Ramune.CommandPauseRemade
 
             Stage.onStageStartGlobal += (self) => 
             {
-                CommandPauseController.TrackedMasterInstances.Clear();
+                CommandPauseController.MasterMenuOpenedCount.Clear();
             };
 
             On.RoR2.PickupPickerController.OnDisplayBegin += (orig, self, promptController, localUser, cameraRigController) =>
@@ -42,10 +42,10 @@ namespace Ramune.CommandPauseRemade
             {
                 orig(self);
 
-                if(RoR2Application.isInSinglePlayer || !NetworkServer.active || !ModConfig.EnableMultiplayer.Value)
+                if(RoR2Application.isInSinglePlayer || !NetworkServer.active || !ModConfig.EnableMultiplayer.Value) // handle Multiplayer
                     return;
 
-                var commandPauseController = self.gameObject.AddComponent<CommandPauseController>(); // handle Multiplayer
+                var commandPauseController = self.gameObject.AddComponent<CommandPauseController>();
                 commandPauseController.networkUIPromptController = self.networkUIPromptController;
             };
         }
