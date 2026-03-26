@@ -57,15 +57,19 @@ namespace Ramune.CommandPauseRemade
             if(!master)
                 return;
 
-            master.godMode = enabled;
-            master.GetBody()?.ToggleBuffBulk(enabled, PauseBuffDefs);
+            var body = master.GetBody();
+
+            if(!body) 
+                return;
+
+            body.ToggleBuffBulk(enabled, PauseBuffDefs);
         }
 
 
         public static void DisableProtection(CharacterMaster master, int currentInstanceForMaster)
         {
             // If currentInstanceForMaster matches the total instance count for this master, the player hasn't opened another menu within the protection delay time (all clear to remove protections)
-            // If they have opened another menu within the protection delay time, this returns early and waits for them to close the new menu before re-running this logic
+            // If they have opened another menu within the protection delay time, this does nothing and waits for them to close the new menu before re-running this logic
             if(master && TrackedMasterInstances.GetValueOrDefault(master) == currentInstanceForMaster)
                 ToggleProtection(master, false);
         }
