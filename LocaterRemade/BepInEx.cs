@@ -170,8 +170,6 @@ namespace Ramune.LocaterRemade
             if(screenPos.z <= 0 || screenPos.x < 0 || screenPos.x > Screen.width || screenPos.y < 0 || screenPos.y > Screen.height)
                 return;
 
-            var isLookingAt = !ModConfig.EnableLookAtRequired.Value || Vector3.Dot(camera.transform.forward, (worldPos - camPos).normalized) > ModConfig.LookAtFloat.Value;
-
             var config = GetConfigCacheData(obj);
 
             if(config.Label == "N/A")
@@ -239,6 +237,8 @@ namespace Ramune.LocaterRemade
             {
                 GUI.Label(new Rect(iconX, iconY, iconSize, iconSize), "◆");
             }
+
+            var isLookingAt = !ModConfig.EnableLookAtRequired.Value || Vector3.Dot(camera.transform.forward, (worldPos - camPos).normalized) > ModConfig.LookAtFloat.Value;
 
             if(ModConfig.EnableLookAtRequired.Value && !isLookingAt)
                 return;
