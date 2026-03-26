@@ -49,10 +49,7 @@ namespace Ramune.SelfDestructableDrones
                         });
                     }
                 }
-                else
-                {
-                    new ImDroningAndWantToDie(body.netId).Send(NetworkDestination.Server);
-                }
+                else new ImDroningAndWantToDie(body.netId).Send(NetworkDestination.Server);
             };
         }
     }
