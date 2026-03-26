@@ -243,7 +243,7 @@ namespace Ramune.LocaterRemade
             if(ModConfig.EnableLookAtRequired.Value && !isLookingAt)
                 return;
 
-            if (ModConfig.EnableDropShadow.Value)
+            if(ModConfig.EnableDropShadow.Value)
             {
                 GUI.color = Color.black;
                 GUI.Label(new Rect(labelX + 1, labelY + 1, 400 * labelScaleMultiplier, labelHeight), label);
