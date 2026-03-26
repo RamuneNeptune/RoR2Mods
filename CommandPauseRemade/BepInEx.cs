@@ -6,7 +6,7 @@ namespace Ramune.CommandPauseRemade
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class CommandPauseRemade : BaseUnityPlugin
     {
-        public const string PluginGUID = PluginAuthor + "." + PluginName;
+        public const string PluginGUID = PluginName;
         public const string PluginAuthor = "RamuneNeptune";
         public const string PluginName = "Ramune.CommandPauseRemade";
         public const string PluginVersion = "1.0.1";

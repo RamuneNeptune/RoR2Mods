@@ -1,21 +1,28 @@
 
 
-using UnityEngine.Analytics;
-
 namespace Ramune.LocaterRemade
 {
     [BepInDependency("com.rune580.riskofoptions")]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class LocaterRemade : BaseUnityPlugin
     {
-        public const string PluginGUID = PluginAuthor + "." + PluginName;
+        public const string PluginGUID = PluginName;
         public const string PluginAuthor = "RamuneNeptune";
         public const string PluginName = "Ramune.LocaterRemade";
         public const string PluginVersion = "1.0.0";
 
         public Camera camera;
-        public readonly Dictionary<GameObject, string> DisplayNameCache = [];
+        public readonly Dictionary<GameObject, ObjectConfigCacheData> ObjectConfigCache = [];
+        public readonly Dictionary<GameObject, Highlight> HighlightCache = [];
         public readonly Dictionary<Sprite, Texture2D> SpriteCache = [];
+        public static bool isBazaar = false;
+
+        public class ObjectConfigCacheData
+        {
+            public string Label;
+            public ModConfig.TrackedInstanceConfig Entry;
+            public ModConfig.TrackedInstanceConfig CategoryEntry;
+        }
 
 
         public void Awake()
@@ -27,13 +34,13 @@ namespace Ramune.LocaterRemade
             {
                 orig(self);
 
-                if(self.GetComponentInParent<ScrapperController>() is var scrapper)
+                if(self.GetComponentInParent<ScrapperController>() is ScrapperController scrapper)
                     InstanceTracker.Add(scrapper);
             };
 
             On.RoR2.PickupPickerController.OnDisable += (orig, self) =>
             {
-                if(self.GetComponentInParent<ScrapperController>() is var scrapper)
+                if(self.GetComponentInParent<ScrapperController>() is ScrapperController scrapper)
                     InstanceTracker.Remove(scrapper);
 
                 orig(self);
@@ -41,9 +48,40 @@ namespace Ramune.LocaterRemade
 
             Stage.onStageStartGlobal += (stage) =>
             {
-                DisplayNameCache.Clear();
+                ObjectConfigCache.Clear();
+                HighlightCache.Clear();
                 SpriteCache.Clear();
+
+                if(!ModConfig.EnableBazaarCheck.Value)
+                    return;
+
+                var sceneDef = stage.sceneDef;
+
+                if(!sceneDef)
+                    return;
+
+                var stageName = sceneDef.cachedName;
+
+                if(string.IsNullOrEmpty(stageName))
+                    return;
+                
+                isBazaar = stageName.ToLower().StartsWith("bazaar");
             };
+        }
+
+
+        public void ProcessCategory<T>(bool enabled, List<T> instances, Func<T, bool>? condition = null) where T : MonoBehaviour
+        {
+            if(!enabled)
+                return;
+
+            foreach(var instance in instances)
+            {
+                if(!instance || (condition != null && !condition(instance)))
+                    continue;
+
+                Process(instance.gameObject);
+            }
         }
 
 
@@ -63,99 +101,88 @@ namespace Ramune.LocaterRemade
             if(localUser?.eventSystem && localUser.eventSystem.isCursorVisible)
                 return;
 
-            // Teleporters
-            if(ModConfig.EnableCategoryTeleporterInteraction.Value)
-            {
-                foreach(var teleporter in InstanceTracker.GetInstancesList<TeleporterInteraction>())
-                {
-                    if(teleporter)
-                        ProcessInteractable(teleporter.gameObject, true);
-                }
-            }
+            ProcessCategory(ModConfig.EnableCategoryGenericInteraction.Value, InstanceTracker.GetInstancesList<GenericInteraction>(), generic => generic.interactability == Interactability.Available);
 
-            // Pickups (item drops, command essence, etc.)
-            if(ModConfig.EnableCategoryGenericPickupController.Value)
-            {
-                foreach(var pickup in InstanceTracker.GetInstancesList<GenericPickupController>())
-                {
-                    if(pickup)
-                        ProcessInteractable(pickup.gameObject, !pickup.consumed);
-                }
-            }
+            if(ModConfig.EnableBazaarCheck.Value && isBazaar)
+                return;
 
-            // Unknown but just in case ig
-            if(ModConfig.EnableCategoryGenericInteraction.Value)
-            {
-                foreach(var generic in InstanceTracker.GetInstancesList<GenericInteraction>())
-                {
-                    if(generic)
-                        ProcessInteractable(generic.gameObject, generic.interactability == Interactability.Available);
-                }
-            }
+            ProcessCategory(ModConfig.EnableCategoryTeleporterInteraction.Value, InstanceTracker.GetInstancesList<TeleporterInteraction>());
 
-            // Chests, shrines, braziers, printers, multishop terminals, etc. (almost everything)
-            if(ModConfig.EnableCategoryPurchaseInteraction.Value)
-            {
-                foreach(var purchase in InstanceTracker.GetInstancesList<PurchaseInteraction>())
-                {
-                    if(purchase)
-                        ProcessInteractable(purchase.gameObject, purchase.available);
-                }
-            }
+            ProcessCategory(ModConfig.EnableCategoryGenericPickupController.Value, InstanceTracker.GetInstancesList<GenericPickupController>(), pickup => !pickup.consumed);
 
-            // Barrels
-            if(ModConfig.EnableCategoryBarrelInteraction.Value)
-            {
-                foreach(var barrel in InstanceTracker.GetInstancesList<BarrelInteraction>())
-                {
-                    if(barrel)
-                        ProcessInteractable(barrel.gameObject, !barrel.Networkopened);
-                }
-            }
+            ProcessCategory(ModConfig.EnableCategoryPickupPickerController.Value, InstanceTracker.GetInstancesList<PickupPickerController>(), pickup => pickup.available);
 
-            // Drone combiners
-            if(ModConfig.EnableCategoryDroneCombinerController.Value)
-            {
-                foreach(var combiner in InstanceTracker.GetInstancesList<DroneCombinerController>())
-                {
-                    if(combiner)
-                        ProcessInteractable(combiner.gameObject, true);
-                }
-            }
+            ProcessCategory(ModConfig.EnableCategoryPurchaseInteraction.Value, InstanceTracker.GetInstancesList<PurchaseInteraction>(), purchase => purchase.available);
 
-            // Scrappers
-            if(ModConfig.EnableCategoryScrapperController.Value)
-            {
-                foreach(var scrapper in InstanceTracker.GetInstancesList<ScrapperController>())
-                {
-                    if(scrapper)
-                        ProcessInteractable(scrapper.gameObject, true);
-                }
-            }
+            ProcessCategory(ModConfig.EnableCategoryBarrelInteraction.Value, InstanceTracker.GetInstancesList<BarrelInteraction>(), barrel => !barrel.Networkopened);
+
+            ProcessCategory(ModConfig.EnableCategoryDroneCombinerController.Value, InstanceTracker.GetInstancesList<DroneCombinerController>());
+
+            ProcessCategory(ModConfig.EnableCategoryScrapperController.Value, InstanceTracker.GetInstancesList<ScrapperController>());
         }
 
 
-        public void ProcessInteractable(GameObject obj, bool isAvailable)
+        public ObjectConfigCacheData GetConfigCacheData(GameObject gameObject)
         {
-            if(!isAvailable)
-                return;
-
-            var worldPos = obj.transform.position;
-
-            var isLookingAt = Vector3.Dot(camera.transform.forward, (worldPos - camera.transform.position).normalized) > ModConfig.LookAtFloat.Value;
-
-            if(!DisplayNameCache.TryGetValue(obj, out string label))
+            if(!ObjectConfigCache.TryGetValue(gameObject, out var configCacheData))
             {
-                var displayNameProvider = obj.GetComponent<IDisplayNameProvider>();
+                configCacheData = new ObjectConfigCacheData();
+
+                var displayNameProvider = gameObject.GetComponent<IDisplayNameProvider>();
                 var displayName = displayNameProvider?.GetDisplayName() ?? "N/A";
-                label = displayName;
-                DisplayNameCache[obj] = label;
+                displayName = Regex.Replace(displayName, "<.*?>", "").Trim();
+
+                configCacheData.Label = displayName;
+
+                if(displayName != "N/A")
+                {
+                    configCacheData.Entry = ModConfig.TrackedInstanceConfigs.GetValueOrDefault(displayName);
+
+                    if(ModConfig.TrackedInstanceCategoryLookup.TryGetValue(displayName, out var categoryName))
+                    {
+                        configCacheData.CategoryEntry = ModConfig.TrackedInstanceCategoryConfigs.GetValueOrDefault(categoryName);
+                    }
+                }
+
+                ObjectConfigCache[gameObject] = configCacheData;
             }
 
-            if(label == "N/A") 
+            return configCacheData;
+        }
+
+
+        public void Process(GameObject obj)
+        {
+            var worldPos = obj.transform.position;
+            var camPos = camera.transform.position;
+
+            if(ModConfig.EnableMaxDistance.Value)
+            {
+                var maxDistance = ModConfig.MaxDistance.Value;
+                var maxDistanceSqr = maxDistance * maxDistance;
+
+                if((worldPos - camPos).sqrMagnitude > maxDistanceSqr)
+                    return;
+            }
+
+            var screenPos = camera.WorldToScreenPoint(worldPos);
+
+            if(screenPos.z <= 0 || screenPos.x < 0 || screenPos.x > Screen.width || screenPos.y < 0 || screenPos.y > Screen.height)
                 return;
 
-            // filtering to do specific stuff for specific things (e.g. chest icons bigger than drones) would happen here, since we now have a displayname which is consistent for all items of that type
+            var isLookingAt = !ModConfig.EnableLookAtRequired.Value || Vector3.Dot(camera.transform.forward, (worldPos - camPos).normalized) > ModConfig.LookAtFloat.Value;
+
+            var config = GetConfigCacheData(obj);
+
+            if(config.Label == "N/A")
+                return;
+
+            var isEnabled = (config.CategoryEntry?.Enabled.Value ?? true) && (config.Entry?.Enabled.Value ?? true);
+
+            if(!isEnabled)
+                return;
+
+            var label = config.Entry != null ? config.Entry.Label.Value : config.Label;
 
             var iconSprite = PingIndicator.GetInteractableIcon(obj);
             Texture2D iconTex = null;
@@ -166,50 +193,63 @@ namespace Ramune.LocaterRemade
                 SpriteCache[iconSprite] = iconTex;
             }
 
-            var color = obj.TryGetComponent<Highlight>(out var highlight) ? highlight.GetColor() : Color.white;
+            var color = config.Entry?.ColorEnabled.Value == true ? config.Entry.Color.Value : config.CategoryEntry?.ColorEnabled.Value == true ? config.CategoryEntry.Color.Value : GetFallbackColor(obj);
 
-            var screenPos = camera.WorldToScreenPoint(worldPos);
-
-            if(screenPos.z > 0)
+            Color GetFallbackColor(GameObject gameObject)
             {
-                var multiplier = ModConfig.SizeMultiplier.Value;
-
-                var centerY = Screen.height - screenPos.y;
-
-                var iconSize = 16f * multiplier;
-                var labelHeight = 24f * multiplier;
-                var padding = 4f * multiplier;
-
-                var iconX = screenPos.x - iconSize - padding;
-                var iconY = centerY - (iconSize / 2f) - (2f  * multiplier);
-
-                var labelX = screenPos.x;
-                var labelY = centerY - (labelHeight / 2f);
-
-                var text = (ModConfig.EnableLookAtRequired.Value ? (isLookingAt ? label : "") : label);
-
-                GUI.color = color;
-                GUI.skin.label.fontSize = Mathf.RoundToInt(14f * multiplier);
-                GUI.skin.label.wordWrap = false;
-
-                if(iconTex != null)
+                if(!HighlightCache.TryGetValue(gameObject, out var highlight))
                 {
-                    GUI.DrawTexture(new Rect(iconX, iconY, iconSize, iconSize), iconTex);
-                }
-                else
-                {
-                    GUI.Label(new Rect(iconX, labelY, 400, labelHeight), "◆");
+                    gameObject.TryGetComponent(out highlight);
+                    HighlightCache[gameObject] = highlight;
                 }
 
-                if(ModConfig.EnableDropShadow.Value)
-                {
-                    GUI.color = Color.black;
-                    GUI.Label(new Rect(labelX + 1, labelY + 1, 400, labelHeight), text);
-                }
-
-                GUI.color = color;
-                GUI.Label(new Rect(labelX, labelY, 400, labelHeight), text);
+                return highlight ? highlight.GetColor() : Color.white;
             }
+
+            var globalScaleMultiplier = ModConfig.GlobalScale.Value;
+
+            var globalIconScaleMultiplier = ModConfig.GlobalIconScale.Value * globalScaleMultiplier;
+            var globalLabelScaleMultiplier = ModConfig.GlobalLabelScale.Value * globalScaleMultiplier;
+
+            var iconScaleMultiplier = (config.CategoryEntry?.IconScale.Value ?? 1f) * (config.Entry?.IconScale.Value ?? 1f);
+            var labelScaleMultiplier = (config.CategoryEntry?.LabelScale.Value ?? 1f) * (config.Entry?.LabelScale.Value ?? 1f);
+
+            var centerY = Screen.height - screenPos.y;
+
+            var iconSize = 16f * globalIconScaleMultiplier * iconScaleMultiplier;
+            var labelHeight = 24f * globalLabelScaleMultiplier * labelScaleMultiplier;
+            var fontSize = Mathf.RoundToInt(14f * globalLabelScaleMultiplier * labelScaleMultiplier);
+            var padding = 4f * globalScaleMultiplier;
+
+            var iconX = screenPos.x - iconSize - padding;
+            var iconY = centerY - (iconSize / 2f);
+
+            var labelX = screenPos.x;
+            var labelY = centerY - (labelHeight / 2f);
+
+            label = (ModConfig.EnableLookAtRequired.Value ? (isLookingAt ? label : "") : label);
+
+            GUI.skin.label.fontSize = fontSize;
+            GUI.skin.label.wordWrap = false;
+            GUI.color = color;
+
+            if(iconTex != null)
+            {
+                GUI.DrawTexture(new Rect(iconX, iconY, iconSize, iconSize), iconTex);
+            }
+            else
+            {
+                GUI.Label(new Rect(iconX, iconY, iconSize, iconSize), "◆");
+            }
+
+            if(ModConfig.EnableDropShadow.Value)
+            {
+                GUI.color = Color.black;
+                GUI.Label(new Rect(labelX + 1, labelY + 1, 400 * labelScaleMultiplier, labelHeight), label);
+            }
+
+            GUI.color = color;
+            GUI.Label(new Rect(labelX, labelY, 400 * labelScaleMultiplier, labelHeight), label);
         }
     }
 }

@@ -5,7 +5,9 @@ namespace Ramune.CommandPauseRemade
     public static class ModConfig
     {
         public static ConfigEntry<bool> EnableSingleplayer{ get; private set; }
+
         public static ConfigEntry<bool> EnableMultiplayer { get; private set; }
+
         public static ConfigEntry<float> ProtectionDelay { get; private set; }
 
 
@@ -17,9 +19,9 @@ namespace Ramune.CommandPauseRemade
 
             ProtectionDelay = config.Bind("Multiplayer", "Protection Removal Delay", 0.85f, "The delay (in seconds) before protections are removed after closing the Command menu. (default: 0.85)");
 
-            var iconPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(ModConfig).Assembly.Location), "icon.png");
+            var iconPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "icon.png");
 
-            if (File.Exists(iconPath))
+            if(File.Exists(iconPath))
             {
                 var iconTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
 
