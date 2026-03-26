@@ -10,68 +10,50 @@ namespace Ramune.SelfDestructableDrones
         public const string PluginAuthor = "RamuneNeptune";
         public const string PluginName = "Ramune.SelfDestructableDrones";
         public const string PluginVersion = "1.0.0";
-        public static readonly Harmony harmony = new(PluginGUID);
 
         public void Awake()
         {
             Log.Init(Logger);
             ModConfig.Init(Config);
             NetworkingAPI.RegisterMessageType<ImDroningAndWantToDie>();
-            harmony.PatchAll();
-        }
-    }
 
-
-    [HarmonyPatch(typeof(EquipmentSlot))]
-    public static class EquipmentSlotPatches
-    {
-        // Host
-        [HarmonyPatch(nameof(EquipmentSlot.ExecuteIfReady)), HarmonyPrefix]
-        public static bool ExecuteIfReady(EquipmentSlot __instance, ref bool __result)
-        {
-            if(!NetworkServer.active)
+            On.RoR2.PlayerCharacterMasterController.PollButtonInput += (orig, self) =>
             {
-                Debug.LogWarning("[Server] function 'System.Boolean RoR2.EquipmentSlot::ExecuteIfReady()' called on client");
-                __result = false;
-                return false;
-            }
+                orig(self);
 
-            var body = __instance.characterBody;
+                if(!self || !self.hasAuthority)
+                    return;
 
-            if(!body || !body.IsDrone || !body.master || !body.master.lostBodyToDeath || !body.healthComponent || !body.healthComponent.alive)
-                return true;
-            
-            body.healthComponent.Suicide();
+                var master = self.master;
 
-            if(ModConfig.EnableChatMessage.Value)
-            {
-                Chat.SendBroadcastChat(new Chat.SimpleChatMessage
+                if(!master || !master.hasBody || !master.lostBodyToDeath)
+                    return;
+
+                var body = self.body ?? self.master.GetBody();
+
+                if(!body || !body.IsDrone || !body.healthComponent || !body.healthComponent.alive)
+                    return;
+
+                if(self.bodyInputs.activateEquipment.justPressed != true)
+                    return;
+
+                if(NetworkServer.active)
                 {
-                    baseToken = $"<color=#ff3a00>{(body.master != null && body.master.playerCharacterMasterController != null && body.master.playerCharacterMasterController.networkUser != null && !string.IsNullOrEmpty(body.master.playerCharacterMasterController.networkUser.userName) ? body.master.playerCharacterMasterController.networkUser.userName : "A Drone")} has self destructed!</color>"
-                });
-            }
+                    body.healthComponent.Suicide();
 
-            __result = false;
-            return false;
-        }
-
-        // Client
-        [HarmonyPatch(nameof(EquipmentSlot.CallCmdExecuteIfReady)), HarmonyPrefix]
-        public static bool CallCmdExecuteIfReady(EquipmentSlot __instance)
-        {
-            if(NetworkServer.active || !NetworkClient.active)
-            {
-                Debug.LogError("Command function CmdExecuteIfReady called on server.");
-                return false;
-            }
-
-            var body = __instance.characterBody;
-
-            if(!body || !body.IsDrone || !body.master || !body.master.lostBodyToDeath || !body.healthComponent || !body.healthComponent.alive)
-                return true;
-
-            new ImDroningAndWantToDie(body.netId).Send(NetworkDestination.Server);
-            return false;
+                    if(ModConfig.EnableChatMessage.Value)
+                    {
+                        Chat.SendBroadcastChat(new Chat.SimpleChatMessage
+                        {
+                            baseToken = $"<color=#ff3a00>{(self.networkUser != null && !string.IsNullOrEmpty(self.networkUser.userName) ? self.networkUser.userName : "A Drone")} has self destructed!</color>"
+                        });
+                    }
+                }
+                else
+                {
+                    new ImDroningAndWantToDie(body.netId).Send(NetworkDestination.Server);
+                }
+            };
         }
     }
 
@@ -96,7 +78,7 @@ namespace Ramune.SelfDestructableDrones
                 return;
 
             var droneBodyObject = Util.FindNetworkObject(netId);
-                
+
             if(!droneBodyObject || !droneBodyObject.TryGetComponent<CharacterBody>(out var droneBody) || !droneBody.healthComponent || !droneBody.healthComponent.alive)
                 return;
 
