@@ -23,7 +23,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SelfDestructableDrones", "S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnReadyUp", "UnReadyUp\UnReadyUp.csproj", "{19280814-1B0F-4302-9D55-9998DBC2B94A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExamplePlugin", "ExamplePlugin\ExamplePlugin.csproj", "{F9F9715C-E2FF-419B-B6EB-BF7EED16518A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoPickupLunarCoins", "AutoPickupLunarCoins\AutoPickupLunarCoins.csproj", "{F9F9715C-E2FF-419B-B6EB-BF7EED16518A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
