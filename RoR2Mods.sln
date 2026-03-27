@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnReadyUp", "UnReadyUp\UnRe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoPickupLunarCoins", "AutoPickupLunarCoins\AutoPickupLunarCoins.csproj", "{F9F9715C-E2FF-419B-B6EB-BF7EED16518A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AutoMove", "AutoMove\AutoMove.csproj", "{F4DB638B-6CAD-4C14-A112-22406600A1ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{F9F9715C-E2FF-419B-B6EB-BF7EED16518A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9F9715C-E2FF-419B-B6EB-BF7EED16518A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9F9715C-E2FF-419B-B6EB-BF7EED16518A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4DB638B-6CAD-4C14-A112-22406600A1ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4DB638B-6CAD-4C14-A112-22406600A1ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4DB638B-6CAD-4C14-A112-22406600A1ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4DB638B-6CAD-4C14-A112-22406600A1ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -77,6 +83,7 @@ Global
 		{AF1395F2-549B-49AD-9977-C1AC09DEBB1D} = {C3D91385-7625-4877-A8B3-8E8D813EEAC7}
 		{19280814-1B0F-4302-9D55-9998DBC2B94A} = {C3D91385-7625-4877-A8B3-8E8D813EEAC7}
 		{F9F9715C-E2FF-419B-B6EB-BF7EED16518A} = {C3D91385-7625-4877-A8B3-8E8D813EEAC7}
+		{F4DB638B-6CAD-4C14-A112-22406600A1ED} = {C3D91385-7625-4877-A8B3-8E8D813EEAC7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {25394121-1456-4FD9-A853-060A4DBBB74C}
