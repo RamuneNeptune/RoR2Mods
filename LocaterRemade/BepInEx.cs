@@ -238,9 +238,8 @@ namespace Ramune.LocaterRemade
                 GUI.Label(new Rect(iconX, iconY, iconSize, iconSize), "◆");
             }
 
-            var isLookingAt = !ModConfig.EnableLookAtRequired.Value || Vector3.Dot(camera.transform.forward, (worldPos - camPos).normalized) > ModConfig.LookAtFloat.Value;
-
-            if(ModConfig.EnableLookAtRequired.Value && !isLookingAt)
+            // If EnableLookAtRequired && !isLookingAt
+            if(ModConfig.EnableLookAtRequired.Value && !(Vector3.Dot(camera.transform.forward, (worldPos - camPos).normalized) > ModConfig.LookAtFloat.Value))
                 return;
 
             if(ModConfig.EnableDropShadow.Value)
